@@ -1,0 +1,146 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Security Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'sudiyantoro179@smkn62-jkt.sch.id' ||
+        request.auth.token.email == 'sudiyantoro62@gmail.com'
+      );
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        isBootstrappedAdmin() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Validation helper for Student documents
+    function isValidStudent(data) {
+      return data.keys().hasAll(['id', 'nisn', 'nama', 'kelas', 'tahun']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.nisn is string && data.nisn.size() <= 32 &&
+        data.nama is string && data.nama.size() <= 128 &&
+        data.kelas is string && data.kelas.size() <= 32 &&
+        data.tahun is string && data.tahun.size() <= 32 &&
+        (!('telepon' in data) || (data.telepon is string && data.telepon.size() <= 32)) &&
+        (!('foto' in data) || data.foto == null || (data.foto is string && data.foto.size() <= 200000));
+    }
+
+    // Validation helper for Attendance documents
+    function isValidAttendance(data) {
+      return data.keys().hasAll(['id', 'nisn', 'nama', 'kelas', 'date', 'time', 'status']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.nisn is string && data.nisn.size() <= 32 &&
+        data.nama is string && data.nama.size() <= 128 &&
+        data.kelas is string && data.kelas.size() <= 32 &&
+        data.date is string && data.date.size() <= 32 &&
+        data.time is string && data.time.size() <= 32 &&
+        (data.status in ['Hadir', 'Sakit', 'Ijin', 'Alpa']) &&
+        (!('keterangan' in data) || (data.keterangan is string && data.keterangan.size() <= 256)) &&
+        (!('petugas' in data) || (data.petugas is string && data.petugas.size() <= 128));
+    }
+
+    // Validation helper for AdminUser documents
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['id', 'nama', 'username', 'email', 'role', 'status']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.nama is string && data.nama.size() <= 128 &&
+        data.username is string && data.username.size() <= 64 &&
+        data.email is string && data.email.size() <= 128 &&
+        (data.role in ['super_admin', 'admin', 'operator']) &&
+        (data.status in ['Aktif', 'Nonaktif']);
+    }
+
+    // Validation helper for ActivityLog documents
+    function isValidActivityLog(data) {
+      return data.keys().hasAll(['id', 'waktu', 'adminUsername', 'adminNama', 'peran', 'aksi', 'detail']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.waktu is string && data.waktu.size() <= 64 &&
+        data.adminUsername is string && data.adminUsername.size() <= 64 &&
+        data.adminNama is string && data.adminNama.size() <= 128 &&
+        (data.peran in ['super_admin', 'admin', 'operator']) &&
+        data.aksi is string && data.aksi.size() <= 128 &&
+        data.detail is string && data.detail.size() <= 512;
+    }
+
+    // Validation helper for SchoolProfile document
+    function isValidSchoolProfile(data) {
+      return data.keys().hasAll(['namaSekolah', 'npsn', 'kepalaSekolah', 'nipKepalaSekolah', 'tahunAjaranAktif']) &&
+        data.namaSekolah is string && data.namaSekolah.size() <= 128 &&
+        data.npsn is string && data.npsn.size() <= 32 &&
+        data.kepalaSekolah is string && data.kepalaSekolah.size() <= 128 &&
+        data.nipKepalaSekolah is string && data.nipKepalaSekolah.size() <= 64 &&
+        data.tahunAjaranAktif is string && data.tahunAjaranAktif.size() <= 32;
+    }
+
+    // Test connection document
+    match /test/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Students Collection
+    match /students/{studentId} {
+      allow read: if true;
+      allow create: if isValidId(studentId) && isValidStudent(incoming());
+      allow update: if isValidId(studentId) && isValidStudent(incoming());
+      allow delete: if isValidId(studentId);
+    }
+
+    // Attendances Collection
+    match /attendances/{attendanceId} {
+      allow read: if true;
+      allow create: if isValidId(attendanceId) && isValidAttendance(incoming());
+      allow update: if isValidId(attendanceId) && isValidAttendance(incoming());
+      allow delete: if isValidId(attendanceId);
+    }
+
+    // Admin Users Collection
+    match /admins/{adminId} {
+      allow read: if true;
+      allow create: if isValidId(adminId) && isValidAdminUser(incoming());
+      allow update: if isValidId(adminId) && isValidAdminUser(incoming());
+      allow delete: if isValidId(adminId);
+    }
+
+    // Activity Logs Collection
+    match /activityLogs/{logId} {
+      allow read: if true;
+      allow create: if isValidId(logId) && isValidActivityLog(incoming());
+      allow update: if false; // Audit logs are immutable
+      allow delete: if false;
+    }
+
+    // School Profile & Settings Collection
+    match /settings/{settingId} {
+      allow read: if true;
+      allow create: if isValidId(settingId) && isValidSchoolProfile(incoming());
+      allow update: if isValidId(settingId) && isValidSchoolProfile(incoming());
+      allow delete: if false;
+    }
+  }
+}

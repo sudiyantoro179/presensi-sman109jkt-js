@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "Data identitas peserta didik SMA NEGERI 109 JAKARTA",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "nisn": { "type": "string", "maxLength": 32 },
+        "nama": { "type": "string", "maxLength": 128 },
+        "kelas": { "type": "string", "maxLength": 32 },
+        "tahun": { "type": "string", "maxLength": 32 },
+        "jenisKelamin": { "type": "string", "enum": ["L", "P"] },
+        "telepon": { "type": "string", "maxLength": 32 },
+        "foto": { "type": "string", "maxLength": 200000 },
+        "fotoUpdatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "nisn", "nama", "kelas", "tahun"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Rekaman kehadiran harian siswa SMA NEGERI 109 JAKARTA",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "nisn": { "type": "string", "maxLength": 32 },
+        "nama": { "type": "string", "maxLength": 128 },
+        "kelas": { "type": "string", "maxLength": 32 },
+        "date": { "type": "string", "maxLength": 32 },
+        "time": { "type": "string", "maxLength": 32 },
+        "status": { "type": "string", "enum": ["Hadir", "Sakit", "Ijin", "Alpa"] },
+        "keterangan": { "type": "string", "maxLength": 256 },
+        "petugas": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "nisn", "nama", "kelas", "date", "time", "status"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Akun administrator dan petugas presensi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "nama": { "type": "string", "maxLength": 128 },
+        "username": { "type": "string", "maxLength": 64 },
+        "email": { "type": "string", "maxLength": 128 },
+        "passwordHash": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["super_admin", "admin", "operator"] },
+        "telepon": { "type": "string", "maxLength": 32 },
+        "status": { "type": "string", "enum": ["Aktif", "Nonaktif"] },
+        "terakhirLogin": { "type": "string", "maxLength": 64 },
+        "dibuatPada": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "nama", "username", "email", "role", "status"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Catatan jejak audit aktivitas administrator",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "waktu": { "type": "string", "maxLength": 64 },
+        "adminUsername": { "type": "string", "maxLength": 64 },
+        "adminNama": { "type": "string", "maxLength": 128 },
+        "peran": { "type": "string", "enum": ["super_admin", "admin", "operator"] },
+        "aksi": { "type": "string", "maxLength": 128 },
+        "detail": { "type": "string", "maxLength": 512 }
+      },
+      "required": ["id", "waktu", "adminUsername", "adminNama", "peran", "aksi", "detail"]
+    },
+    "SchoolProfile": {
+      "title": "SchoolProfile",
+      "description": "Profil dan konfigurasi identitas sekolah SMAN 109 Jakarta",
+      "type": "object",
+      "properties": {
+        "namaSekolah": { "type": "string", "maxLength": 128 },
+        "namaSingkat": { "type": "string", "maxLength": 64 },
+        "npsn": { "type": "string", "maxLength": 32 },
+        "alamat": { "type": "string", "maxLength": 256 },
+        "kelurahan": { "type": "string", "maxLength": 64 },
+        "kecamatan": { "type": "string", "maxLength": 64 },
+        "kota": { "type": "string", "maxLength": 64 },
+        "provinsi": { "type": "string", "maxLength": 64 },
+        "kodePos": { "type": "string", "maxLength": 16 },
+        "telepon": { "type": "string", "maxLength": 32 },
+        "email": { "type": "string", "maxLength": 128 },
+        "website": { "type": "string", "maxLength": 128 },
+        "kepalaSekolah": { "type": "string", "maxLength": 128 },
+        "nipKepalaSekolah": { "type": "string", "maxLength": 64 },
+        "tahunAjaranAktif": { "type": "string", "maxLength": 32 },
+        "semesterAktif": { "type": "string", "enum": ["Ganjil", "Genap"] },
+        "logoUrl": { "type": "string", "maxLength": 200000 }
+      },
+      "required": ["namaSekolah", "npsn", "kepalaSekolah", "nipKepalaSekolah", "tahunAjaranAktif"]
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": { "$ref": "#/entities/Student" },
+      "description": "Koleksi data peserta didik SMA NEGERI 109 JAKARTA"
+    },
+    "/attendances/{attendanceId}": {
+      "schema": { "$ref": "#/entities/Attendance" },
+      "description": "Koleksi rekaman presensi harian siswa"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Koleksi data akun administrator dan petugas"
+    },
+    "/activityLogs/{logId}": {
+      "schema": { "$ref": "#/entities/ActivityLog" },
+      "description": "Koleksi log audit aktivitas administrator"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/SchoolProfile" },
+      "description": "Dokumen konfigurasi dan profil sekolah"
+    }
+  }
+}

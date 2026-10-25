@@ -1,0 +1,6 @@
+{
+  "name": "Sistem Presensi & Kartu Pelajar - SMAN 109 Jakarta",
+  "description": "Aplikasi Presensi Barcode/QR Code, Kartu Pelajar Standar CR80, dan Analisis AI Terpadu untuk SMA NEGERI 109 JAKARTA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
